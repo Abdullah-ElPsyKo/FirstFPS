@@ -47,6 +47,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void PlayerScored(int playerNumber)
     {
+        if (playerNumber != 1 && playerNumber != 2)
+        {
+            Debug.LogError("Invalid player number: " + playerNumber);
+            return;
+        }
         if (playerNumber == 1)
         {
             playerOneScore++;
@@ -57,7 +62,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         }
 
         UpdateScoreboardUI();
-        UpdateScoresOnNetwork();
+        UpdateScoresOnNetwork(true);
     }
 
     void UpdateScoreboardUI()
@@ -76,28 +81,40 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         }
     }
 
-    void UpdateScoresOnNetwork()
+    void UpdateScoresOnNetwork(bool forceUpdate = false)
     {
         ExitGames.Client.Photon.Hashtable scores = new ExitGames.Client.Photon.Hashtable
-        {
-            { "PlayerOneScore", playerOneScore },
-            { "PlayerTwoScore", playerTwoScore }
-        };
+    {
+        { "PlayerOneScore", playerOneScore },
+        { "PlayerTwoScore", playerTwoScore }
+    };
         PhotonNetwork.CurrentRoom.SetCustomProperties(scores);
+
+        if (forceUpdate)
+        {
+            PhotonNetwork.NetworkingClient.Service(); // Force immediate processing of outgoing messages
+        }
     }
 
     public override void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
     {
-        if (propertiesThatChanged.ContainsKey("PlayerOneScore"))
+        bool scoreUpdated = false;
+
+        if (propertiesThatChanged.ContainsKey("PlayerOneScore") && (int)propertiesThatChanged["PlayerOneScore"] != playerOneScore)
         {
             playerOneScore = (int)propertiesThatChanged["PlayerOneScore"];
+            scoreUpdated = true;
         }
-        if (propertiesThatChanged.ContainsKey("PlayerTwoScore"))
+        if (propertiesThatChanged.ContainsKey("PlayerTwoScore") && (int)propertiesThatChanged["PlayerTwoScore"] != playerTwoScore)
         {
             playerTwoScore = (int)propertiesThatChanged["PlayerTwoScore"];
+            scoreUpdated = true;
         }
 
-        UpdateScoreboardUI();
+        if (scoreUpdated)
+        {
+            UpdateScoreboardUI();
+        }
     }
 
     // Adjusted AddKillFeed method to start a coroutine

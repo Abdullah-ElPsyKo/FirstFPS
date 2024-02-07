@@ -9,7 +9,7 @@ public class PlayerHealth : MonoBehaviourPun
 
     void Start()
     {
-        scoreManager = GameObject.FindGameObjectWithTag("Scoreboard"); // Find the object to disable
+        scoreManager = GameObject.FindGameObjectWithTag("ScoreboardScript"); // Find the object to disable
         currentHealth = maxHealth;
     }
 
